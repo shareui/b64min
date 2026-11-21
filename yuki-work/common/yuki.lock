@@ -1,0 +1,12 @@
+version = 1
+target = "x86_64-unknown-linux-gnu"
+compiler = "0.1.0"
+profile = "debug"
+
+[[package]]
+name = "b64min"
+version = "0.1.0"
+kind = "static"
+source = "root"
+checksum = "blake3:10fc69e7df61fbb08ffffda0797a79f5bf2c7a97145eed5a706145e96706edd9"
+features = ["default"]

@@ -1,0 +1,86 @@
+#![lint::allow("W0005")]
+
+load core
+load b64min: encode, decode
+
+#[test]
+fun test_empty() {
+    set empty_bytes: bytes = []
+    set enc = encode(empty_bytes)
+    assert(enc == "", "empty bytes encode must be empty string")
+    set dec = decode("")
+    assert(dec.len() == 0, "empty string decode must have 0 len")
+}
+
+#[test]
+fun test_rfc_vectors() {
+    set f_bytes: bytes = cast("f", "bytes")
+    assert(encode(f_bytes) == "Zg==", "encode('f') != 'Zg=='")
+    assert(cast(decode("Zg=="), "string") == "f", "decode('Zg==') != 'f'")
+
+    set fo_bytes: bytes = cast("fo", "bytes")
+    assert(encode(fo_bytes) == "Zm8=", "encode('fo') != 'Zm8='")
+    assert(cast(decode("Zm8="), "string") == "fo", "decode('Zm8=') != 'fo'")
+
+    set foo_bytes: bytes = cast("foo", "bytes")
+    assert(encode(foo_bytes) == "Zm9v", "encode('foo') != 'Zm9v'")
+    assert(cast(decode("Zm9v"), "string") == "foo", "decode('Zm9v') != 'foo'")
+
+    set foob_bytes: bytes = cast("foob", "bytes")
+    assert(encode(foob_bytes) == "Zm9vYg==", "encode('foob') != 'Zm9vYg=='")
+    assert(cast(decode("Zm9vYg=="), "string") == "foob", "decode('Zm9vYg==') != 'foob'")
+
+    set fooba_bytes: bytes = cast("fooba", "bytes")
+    assert(encode(fooba_bytes) == "Zm9vYmE=", "encode('fooba') != 'Zm9vYmE='")
+    assert(cast(decode("Zm9vYmE="), "string") == "fooba", "decode('Zm9vYmE=') != 'fooba'")
+
+    set foobar_bytes: bytes = cast("foobar", "bytes")
+    assert(encode(foobar_bytes) == "Zm9vYmFy", "encode('foobar') != 'Zm9vYmFy'")
+    assert(cast(decode("Zm9vYmFy"), "string") == "foobar", "decode('Zm9vYmFy') != 'foobar'")
+}
+
+#[test]
+fun test_binary_roundtrip() {
+    set data: uint8[] = []
+    for i in 0..256 {
+        data.push(cast(i, "uint8"))
+    }
+    set encoded = encode(cast(data, "bytes"))
+    set decoded = decode(encoded)
+    assert(decoded.len() == 256, "decoded binary length must be 256")
+    for i in 0..256 {
+        assert(decoded[i] == cast(i, "uint8"), "decoded byte mismatch")
+    }
+}
+
+#[test]
+fun test_whitespace_handling() {
+    set with_ws = "  Z  m \n 9 \r\n v  "
+    set dec = decode(with_ws)
+    assert(cast(dec, "string") == "foo", "whitespace handling failed")
+}
+
+#[test]
+fun test_sentences() {
+    set s1 = "Hello, Yukino World!"
+    set enc1 = encode(cast(s1, "bytes"))
+    assert(enc1 == "SGVsbG8sIFl1a2lubyBXb3JsZCE=", "s1 encode mismatch")
+    assert(cast(decode(enc1), "string") == s1, "s1 decode mismatch")
+
+    set s2 = "The quick brown fox jumps over the lazy dog."
+    set enc2 = encode(cast(s2, "bytes"))
+    assert(enc2 == "VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4=", "s2 encode mismatch")
+    assert(cast(decode(enc2), "string") == s2, "s2 decode mismatch")
+}
+
+#[test]
+#[should_panic]
+fun test_invalid_length() {
+    decode("Zm9vY")
+}
+
+#[test]
+#[should_panic]
+fun test_invalid_input() {
+    decode("invalid!!!")
+}
